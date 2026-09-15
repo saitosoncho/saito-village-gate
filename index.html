@@ -1,8 +1,6 @@
 <!doctype html>
 <html lang="ja">
-
 <head>
-
   <meta charset="utf-8">
 
   <meta
@@ -15,7 +13,6 @@
     content="#12051d"
   >
 
-  <!-- iPhoneホーム画面アプリ対応 -->
   <meta
     name="apple-mobile-web-app-capable"
     content="yes"
@@ -31,6 +28,8 @@
     content="yes"
   >
 
+  <title>齋藤村</title>
+
   <meta
     name="application-name"
     content="齋藤村"
@@ -40,8 +39,6 @@
     name="apple-mobile-web-app-title"
     content="齋藤村"
   >
-
-  <title>齋藤村</title>
 
   <link
     rel="apple-touch-icon"
@@ -57,7 +54,6 @@
   >
 
   <style>
-
     * {
       box-sizing: border-box;
     }
@@ -73,22 +69,22 @@
     }
 
     body {
-      min-height: 100vh;
       min-height: 100svh;
     }
 
     #villagePortal {
       position: fixed;
       inset: 0;
+
       width: 100%;
       height: 100%;
+
       border: 0;
       display: block;
+
       background: #12051d;
     }
-
   </style>
-
 </head>
 
 <body>
@@ -100,7 +96,6 @@
   ></iframe>
 
   <script>
-
     (function() {
 
       const GAS_PORTAL_URL =
@@ -162,6 +157,56 @@
       }
 
 
+      function isAllowedPortalOrigin(
+        origin
+      ) {
+
+        try {
+
+          const url =
+            new URL(
+              origin
+            );
+
+          const host =
+            String(
+              url.hostname || ""
+            ).toLowerCase();
+
+          return (
+
+            url.protocol ===
+              "https:" &&
+
+            (
+
+              host ===
+                "script.google.com" ||
+
+              (
+                host.endsWith(
+                  ".googleusercontent.com"
+                ) &&
+
+                host.includes(
+                  "script"
+                )
+              )
+
+            )
+
+          );
+
+        }
+        catch (error) {
+
+          return false;
+
+        }
+
+      }
+
+
       function openVillagePortal() {
 
         const residentNo =
@@ -171,13 +216,6 @@
           new URL(
             GAS_PORTAL_URL
           );
-
-        /*
-         * GitHub側に保存済みの村民番号がある場合、
-         * GASへ引き渡します。
-         *
-         * GAS側で住民台帳との再確認を行います。
-         */
 
         if (residentNo) {
 
@@ -201,13 +239,14 @@
         function(event) {
 
           /*
-           * 現在表示しているGASポータル以外からの
-           * メッセージは受け付けません。
+           * GASはGoogle側の内部フレームを経由するため、
+           * event.sourceではなく送信元ドメインを確認します。
            */
 
           if (
-            event.source !==
-            portalFrame.contentWindow
+            !isAllowedPortalOrigin(
+              event.origin
+            )
           ) {
 
             return;
@@ -288,9 +327,7 @@
       openVillagePortal();
 
     })();
-
   </script>
 
 </body>
-
 </html>
