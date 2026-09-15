@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="ja">
+
 <head>
+
   <meta charset="utf-8">
 
   <meta
@@ -13,7 +15,21 @@
     content="#12051d"
   >
 
-  <title>齋藤村</title>
+  <!-- iPhoneホーム画面アプリ対応 -->
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+
+  <meta
+    name="mobile-web-app-capable"
+    content="yes"
+  >
 
   <meta
     name="application-name"
@@ -24,6 +40,8 @@
     name="apple-mobile-web-app-title"
     content="齋藤村"
   >
+
+  <title>齋藤村</title>
 
   <link
     rel="apple-touch-icon"
@@ -39,6 +57,7 @@
   >
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -54,32 +73,224 @@
     }
 
     body {
+      min-height: 100vh;
       min-height: 100svh;
     }
 
     #villagePortal {
       position: fixed;
       inset: 0;
-
       width: 100%;
       height: 100%;
-
       border: 0;
       display: block;
-
       background: #12051d;
     }
+
   </style>
+
 </head>
 
 <body>
 
   <iframe
     id="villagePortal"
-    src="https://script.google.com/macros/s/AKfycbx_dZMFQRttoa1-L8irGyt3n04S5Y3JXH0swirg9SS0n1LmQKWhweCvPSpjj1YyAA99/exec"
     title="齋藤村"
     allow="clipboard-read; clipboard-write"
   ></iframe>
 
+  <script>
+
+    (function() {
+
+      const GAS_PORTAL_URL =
+        "https://script.google.com/macros/s/AKfycbx_dZMFQRttoa1-L8irGyt3n04S5Y3JXH0swirg9SS0n1LmQKWhweCvPSpjj1YyAA99/exec";
+
+      const RESIDENT_STORAGE_KEY =
+        "saitoVillageResidentNo";
+
+      const portalFrame =
+        document.getElementById(
+          "villagePortal"
+        );
+
+
+      function normalizeResidentNo(
+        residentNo
+      ) {
+
+        residentNo =
+          String(
+            residentNo || ""
+          ).trim();
+
+        return /^SV-\d{6}$/.test(
+          residentNo
+        )
+
+          ? residentNo
+
+          : "";
+
+      }
+
+
+      function getStoredResidentNo() {
+
+        try {
+
+          return normalizeResidentNo(
+
+            localStorage.getItem(
+              RESIDENT_STORAGE_KEY
+            )
+
+          );
+
+        }
+        catch (error) {
+
+          console.warn(
+            "村民情報を読み込めませんでした。",
+            error
+          );
+
+          return "";
+
+        }
+
+      }
+
+
+      function openVillagePortal() {
+
+        const residentNo =
+          getStoredResidentNo();
+
+        const portalUrl =
+          new URL(
+            GAS_PORTAL_URL
+          );
+
+        /*
+         * GitHub側に保存済みの村民番号がある場合、
+         * GASへ引き渡します。
+         *
+         * GAS側で住民台帳との再確認を行います。
+         */
+
+        if (residentNo) {
+
+          portalUrl.searchParams.set(
+            "resident",
+            residentNo
+          );
+
+        }
+
+        portalFrame.src =
+          portalUrl.toString();
+
+      }
+
+
+      window.addEventListener(
+
+        "message",
+
+        function(event) {
+
+          /*
+           * 現在表示しているGASポータル以外からの
+           * メッセージは受け付けません。
+           */
+
+          if (
+            event.source !==
+            portalFrame.contentWindow
+          ) {
+
+            return;
+
+          }
+
+          const data =
+            event.data || {};
+
+          if (
+            data.type ===
+            "SAITO_VILLAGE_SAVE_RESIDENT"
+          ) {
+
+            const residentNo =
+              normalizeResidentNo(
+                data.residentNo
+              );
+
+            if (!residentNo) {
+
+              return;
+
+            }
+
+            try {
+
+              localStorage.setItem(
+
+                RESIDENT_STORAGE_KEY,
+
+                residentNo
+
+              );
+
+            }
+            catch (error) {
+
+              console.warn(
+                "村民情報を保存できませんでした。",
+                error
+              );
+
+            }
+
+            return;
+
+          }
+
+          if (
+            data.type ===
+            "SAITO_VILLAGE_CLEAR_RESIDENT"
+          ) {
+
+            try {
+
+              localStorage.removeItem(
+                RESIDENT_STORAGE_KEY
+              );
+
+            }
+            catch (error) {
+
+              console.warn(
+                "村民情報を削除できませんでした。",
+                error
+              );
+
+            }
+
+          }
+
+        }
+
+      );
+
+
+      openVillagePortal();
+
+    })();
+
+  </script>
+
 </body>
+
 </html>
