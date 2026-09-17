@@ -125,6 +125,15 @@
       const RESIDENT_STORAGE_KEY =
         "saitoVillageResidentNo";
 
+      const ANNIVERSARY_AUTH_STORAGE_KEY =
+        "saitoAnniversaryOuterAuth";
+
+      const ACTIVE_VIEW_STORAGE_KEY =
+        "saitoVillageActiveView";
+
+      const ANNIVERSARY_URL_STORAGE_KEY =
+        "saitoAnniversaryBaseUrl";
+
       const portalFrame =
         document.getElementById(
           "villagePortal"
@@ -237,6 +246,221 @@
       }
 
 
+      function isAllowedAnniversaryUrl(
+        value
+      ) {
+
+        try {
+
+          const url = new URL(
+            String(value || "")
+          );
+
+          return (
+            url.protocol === "https:" &&
+            url.hostname === "script.google.com" &&
+            url.pathname.startsWith(
+              "/macros/s/"
+            )
+          );
+
+        }
+        catch (error) {
+
+          return false;
+
+        }
+
+      }
+
+
+      function createAnniversaryFrameUrl(
+        value
+      ) {
+
+        if (!isAllowedAnniversaryUrl(value)) {
+
+          return "";
+
+        }
+
+        const url = new URL(value);
+
+        url.searchParams.set(
+          "bridgeToken",
+          bridgeToken
+        );
+
+        return url.toString();
+
+      }
+
+
+      function createAnniversaryBaseUrl(
+        value
+      ) {
+
+        if (!isAllowedAnniversaryUrl(value)) {
+
+          return "";
+
+        }
+
+        const url = new URL(value);
+
+        [
+          "resident",
+          "residentNo",
+          "token",
+          "signature",
+          "timestamp",
+          "handoff",
+          "sig",
+          "bridgeToken"
+        ].forEach(
+          function(parameterName) {
+
+            url.searchParams.delete(
+              parameterName
+            );
+
+          }
+        );
+
+        return url.toString();
+
+      }
+
+
+      function showFacilityUrl(
+        value
+      ) {
+
+        const targetUrl =
+          createAnniversaryFrameUrl(value);
+
+        if (!targetUrl) {
+
+          return false;
+
+        }
+
+        facilityFrame.src = targetUrl;
+
+        portalFrame.classList.add(
+          "village-frame-hidden"
+        );
+
+        facilityFrame.classList.remove(
+          "village-frame-hidden"
+        );
+
+        return true;
+
+      }
+
+
+      function getStoredAnniversaryAuth() {
+
+        try {
+
+          const storedValue =
+            localStorage.getItem(
+              ANNIVERSARY_AUTH_STORAGE_KEY
+            );
+
+          if (!storedValue) {
+
+            return null;
+
+          }
+
+          const parsedValue =
+            JSON.parse(storedValue);
+
+          const authSessionToken =
+            String(
+              parsedValue.authSessionToken || ""
+            ).trim();
+
+          if (
+            authSessionToken.length < 8 ||
+            authSessionToken.length > 4096
+          ) {
+
+            return null;
+
+          }
+
+          return {
+            authSessionToken:
+              authSessionToken,
+            residentNo:
+              String(
+                parsedValue.residentNo || ""
+              ).trim(),
+            residentName:
+              String(
+                parsedValue.residentName || ""
+              ).trim()
+          };
+
+        }
+        catch (error) {
+
+          console.warn(
+            "一周年祭の認証情報を読み込めませんでした。",
+            error
+          );
+
+          return null;
+
+        }
+
+      }
+
+
+      function restoreInitialView() {
+
+        try {
+
+          const activeView =
+            localStorage.getItem(
+              ACTIVE_VIEW_STORAGE_KEY
+            );
+
+          const anniversaryUrl =
+            localStorage.getItem(
+              ANNIVERSARY_URL_STORAGE_KEY
+            );
+
+          if (
+            activeView === "anniversary" &&
+            anniversaryUrl &&
+            getStoredAnniversaryAuth()
+          ) {
+
+            return showFacilityUrl(
+              anniversaryUrl
+            );
+
+          }
+
+        }
+        catch (error) {
+
+          console.warn(
+            "前回の表示状態を復元できませんでした。",
+            error
+          );
+
+        }
+
+        return false;
+
+      }
+
+
       window.addEventListener(
 
         "message",
@@ -292,6 +516,172 @@
 
               console.warn(
                 "村民情報を保存できませんでした。",
+                error
+              );
+
+            }
+
+            return;
+
+          }
+
+          if (
+            data.type ===
+            "SAITO_VILLAGE_OPEN_URL"
+          ) {
+
+            const baseUrl =
+              createAnniversaryBaseUrl(
+                data.url
+              );
+
+            if (!baseUrl) {
+
+              return;
+
+            }
+
+            if (!showFacilityUrl(data.url)) {
+
+              return;
+
+            }
+
+            try {
+
+              localStorage.setItem(
+                ANNIVERSARY_URL_STORAGE_KEY,
+                baseUrl
+              );
+
+              localStorage.setItem(
+                ACTIVE_VIEW_STORAGE_KEY,
+                "anniversary"
+              );
+
+            }
+            catch (error) {
+
+              console.warn(
+                "一周年祭の表示状態を保存できませんでした。",
+                error
+              );
+
+            }
+
+            return;
+
+          }
+
+          if (
+            data.type ===
+            "SAITO_ANNIVERSARY_SAVE_AUTH"
+          ) {
+
+            const authSessionToken =
+              String(
+                data.authSessionToken || ""
+              ).trim();
+
+            if (
+              authSessionToken.length < 8 ||
+              authSessionToken.length > 4096
+            ) {
+
+              return;
+
+            }
+
+            try {
+
+              localStorage.setItem(
+                ANNIVERSARY_AUTH_STORAGE_KEY,
+                JSON.stringify({
+                  authSessionToken:
+                    authSessionToken,
+                  residentNo:
+                    String(
+                      data.residentNo || ""
+                    ).trim(),
+                  residentName:
+                    String(
+                      data.residentName || ""
+                    ).trim()
+                })
+              );
+
+            }
+            catch (error) {
+
+              console.warn(
+                "一周年祭の認証情報を保存できませんでした。",
+                error
+              );
+
+            }
+
+            return;
+
+          }
+
+          if (
+            data.type ===
+            "SAITO_ANNIVERSARY_REQUEST_AUTH"
+          ) {
+
+            const storedAuth =
+              getStoredAnniversaryAuth();
+
+            if (
+              event.source &&
+              typeof event.source.postMessage ===
+                "function"
+            ) {
+
+              event.source.postMessage(
+                {
+                  type:
+                    "SAITO_ANNIVERSARY_AUTH_STATE",
+                  bridgeToken:
+                    bridgeToken,
+                  authSessionToken:
+                    storedAuth
+                      ? storedAuth.authSessionToken
+                      : "",
+                  residentNo:
+                    storedAuth
+                      ? storedAuth.residentNo
+                      : "",
+                  residentName:
+                    storedAuth
+                      ? storedAuth.residentName
+                      : ""
+                },
+                "*"
+              );
+
+            }
+
+            return;
+
+          }
+
+          if (
+            data.type ===
+            "SAITO_ANNIVERSARY_CLEAR_AUTH"
+          ) {
+
+            try {
+
+              localStorage.removeItem(
+                ANNIVERSARY_AUTH_STORAGE_KEY
+              );
+
+            }
+            catch (error) {
+
+              console.warn(
+                "一周年祭の認証情報を削除できませんでした。",
                 error
               );
 
@@ -382,6 +772,23 @@
                 "village-frame-hidden"
               );
 
+              try {
+
+                localStorage.setItem(
+                  ACTIVE_VIEW_STORAGE_KEY,
+                  "portal"
+                );
+
+              }
+              catch (error) {
+
+                console.warn(
+                  "表示状態を保存できませんでした。",
+                  error
+                );
+
+              }
+
               return;
 
             }
@@ -433,6 +840,27 @@
 
 
       openVillagePortal();
+
+      if (!restoreInitialView()) {
+
+        try {
+
+          localStorage.setItem(
+            ACTIVE_VIEW_STORAGE_KEY,
+            "portal"
+          );
+
+        }
+        catch (error) {
+
+          console.warn(
+            "表示状態を保存できませんでした。",
+            error
+          );
+
+        }
+
+      }
 
     })();
   </script>
