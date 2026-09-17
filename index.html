@@ -145,6 +145,9 @@
         );
 
       let activeFacilityType = "";
+      let pendingFacilityType = "";
+      let pendingFacilityUrl = "";
+      let facilityNavigationSerial = 0;
 
       const bridgeToken =
         (
@@ -334,6 +337,172 @@
       }
 
 
+      function notifyPortalResumed_() {
+
+        try {
+
+          if (
+            portalFrame.contentWindow &&
+            typeof portalFrame.contentWindow.postMessage ===
+              "function"
+          ) {
+
+            portalFrame.contentWindow.postMessage(
+              {
+                type:
+                  "SAITO_VILLAGE_PORTAL_RESUMED",
+                bridgeToken:
+                  bridgeToken
+              },
+              "*"
+            );
+
+          }
+
+        }
+        catch (error) {
+
+          console.warn(
+            "ポータルの復帰通知に失敗しました。",
+            error
+          );
+
+        }
+
+      }
+
+
+      function resetFacilityFrame_() {
+
+        pendingFacilityType = "";
+        pendingFacilityUrl = "";
+        activeFacilityType = "";
+
+        facilityNavigationSerial += 1;
+
+        facilityFrame.classList.add(
+          "village-frame-hidden"
+        );
+
+        /*
+         * 直前の施設DOM・退場オーバーレイを完全に破棄する。
+         * 次の施設を同じiframeへ読み込む際に、
+         * 前施設の画面が一瞬見える現象を防ぐ。
+         */
+        window.setTimeout(
+          function() {
+
+            try {
+
+              facilityFrame.src =
+                "about:blank";
+
+            }
+            catch (error) {
+
+              console.warn(
+                "施設フレームを初期化できませんでした。",
+                error
+              );
+
+            }
+
+          },
+          40
+        );
+
+      }
+
+
+      function showPortalFrame_() {
+
+        resetFacilityFrame_();
+
+        portalFrame.classList.remove(
+          "village-frame-hidden"
+        );
+
+        notifyPortalResumed_();
+
+      }
+
+
+      function loadFacilityFrame_(
+        targetUrl,
+        facilityType
+      ) {
+
+        targetUrl =
+          String(
+            targetUrl || ""
+          ).trim();
+
+        facilityType =
+          String(
+            facilityType || ""
+          ).trim();
+
+        if (!targetUrl) {
+
+          return false;
+
+        }
+
+        const serial =
+          ++facilityNavigationSerial;
+
+        pendingFacilityType =
+          facilityType;
+
+        pendingFacilityUrl =
+          targetUrl;
+
+        /*
+         * 新施設のload完了まではPortalを表示したままにする。
+         * Portal側の約4秒入場演出がそのまま読み込みを覆うため、
+         * 古い施設フレームが表へ出ることはない。
+         */
+        facilityFrame.classList.add(
+          "village-frame-hidden"
+        );
+
+        facilityFrame.onload =
+          function() {
+
+            if (
+              serial !==
+                facilityNavigationSerial ||
+              !pendingFacilityUrl
+            ) {
+
+              return;
+
+            }
+
+            activeFacilityType =
+              pendingFacilityType;
+
+            pendingFacilityType = "";
+            pendingFacilityUrl = "";
+
+            portalFrame.classList.add(
+              "village-frame-hidden"
+            );
+
+            facilityFrame.classList.remove(
+              "village-frame-hidden"
+            );
+
+          };
+
+        facilityFrame.src =
+          targetUrl;
+
+        return true;
+
+      }
+
+
       function showFacilityUrl(
         value
       ) {
@@ -347,20 +516,10 @@
 
         }
 
-        facilityFrame.src = targetUrl;
-
-        activeFacilityType =
-          "anniversary";
-
-        portalFrame.classList.add(
-          "village-frame-hidden"
+        return loadFacilityFrame_(
+          targetUrl,
+          "anniversary"
         );
-
-        facilityFrame.classList.remove(
-          "village-frame-hidden"
-        );
-
-        return true;
 
       }
 
@@ -797,15 +956,7 @@
 
             if (page === "portal") {
 
-              activeFacilityType = "";
-
-              facilityFrame.classList.add(
-                "village-frame-hidden"
-              );
-
-              portalFrame.classList.remove(
-                "village-frame-hidden"
-              );
+              showPortalFrame_();
 
               try {
 
@@ -856,15 +1007,9 @@
 
             }
 
-            facilityFrame.src =
-              targetUrl.toString();
-
-            portalFrame.classList.add(
-              "village-frame-hidden"
-            );
-
-            facilityFrame.classList.remove(
-              "village-frame-hidden"
+            loadFacilityFrame_(
+              targetUrl.toString(),
+              page
             );
 
           }
