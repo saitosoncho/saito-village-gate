@@ -72,7 +72,8 @@
       min-height: 100svh;
     }
 
-    #villagePortal {
+    #villagePortal,
+    #villageFacility {
       position: fixed;
       inset: 0;
 
@@ -84,6 +85,19 @@
 
       background: #12051d;
     }
+
+    #villagePortal {
+      z-index: 1;
+    }
+
+    #villageFacility {
+      z-index: 2;
+    }
+
+    .village-frame-hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
   </style>
 </head>
 
@@ -92,6 +106,13 @@
   <iframe
     id="villagePortal"
     title="齋藤村"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
+
+  <iframe
+    id="villageFacility"
+    class="village-frame-hidden"
+    title="齋藤村の施設"
     allow="clipboard-read; clipboard-write"
   ></iframe>
 
@@ -107,6 +128,11 @@
       const portalFrame =
         document.getElementById(
           "villagePortal"
+        );
+
+      const facilityFrame =
+        document.getElementById(
+          "villageFacility"
         );
 
       const bridgeToken =
@@ -199,6 +225,14 @@
 
         portalFrame.src =
           portalUrl.toString();
+
+        portalFrame.classList.remove(
+          "village-frame-hidden"
+        );
+
+        facilityFrame.classList.add(
+          "village-frame-hidden"
+        );
 
       }
 
@@ -338,14 +372,24 @@
                 GAS_PORTAL_URL
               );
 
-            if (page !== "portal") {
+            if (page === "portal") {
 
-              targetUrl.searchParams.set(
-                "page",
-                page
+              facilityFrame.classList.add(
+                "village-frame-hidden"
               );
 
+              portalFrame.classList.remove(
+                "village-frame-hidden"
+              );
+
+              return;
+
             }
+
+            targetUrl.searchParams.set(
+              "page",
+              page
+            );
 
             targetUrl.searchParams.set(
               "bridgeToken",
@@ -370,8 +414,16 @@
 
             }
 
-            portalFrame.src =
+            facilityFrame.src =
               targetUrl.toString();
+
+            portalFrame.classList.add(
+              "village-frame-hidden"
+            );
+
+            facilityFrame.classList.remove(
+              "village-frame-hidden"
+            );
 
           }
 
