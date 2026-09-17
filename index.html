@@ -288,6 +288,91 @@
 
             }
 
+            return;
+
+          }
+
+          if (
+            data.type ===
+            "SAITO_VILLAGE_NAVIGATE"
+          ) {
+
+            const allowedPages =
+              [
+                "portal",
+                "fishing",
+                "bar",
+                "notebook",
+                "exploration",
+                "utsushimi",
+                "janken",
+                "memorial"
+              ];
+
+            const page =
+              String(
+                data.page || "portal"
+              ).trim();
+
+            if (
+              !allowedPages.includes(page)
+            ) {
+
+              return;
+
+            }
+
+            const residentNo =
+              normalizeResidentNo(
+                data.residentNo
+              ) ||
+              getStoredResidentNo();
+
+            const residentName =
+              String(
+                data.residentName || ""
+              ).trim();
+
+            const targetUrl =
+              new URL(
+                GAS_PORTAL_URL
+              );
+
+            if (page !== "portal") {
+
+              targetUrl.searchParams.set(
+                "page",
+                page
+              );
+
+            }
+
+            targetUrl.searchParams.set(
+              "bridgeToken",
+              bridgeToken
+            );
+
+            if (residentNo) {
+
+              targetUrl.searchParams.set(
+                "resident",
+                residentNo
+              );
+
+            }
+
+            if (residentName) {
+
+              targetUrl.searchParams.set(
+                "residentName",
+                residentName
+              );
+
+            }
+
+            portalFrame.src =
+              targetUrl.toString();
+
           }
 
         }
