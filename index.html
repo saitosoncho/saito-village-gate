@@ -144,6 +144,8 @@
           "villageFacility"
         );
 
+      let activeFacilityType = "";
+
       const bridgeToken =
         (
           window.crypto &&
@@ -347,6 +349,9 @@
 
         facilityFrame.src = targetUrl;
 
+        activeFacilityType =
+          "anniversary";
+
         portalFrame.classList.add(
           "village-frame-hidden"
         );
@@ -474,6 +479,34 @@
 
           const data =
             event.data || {};
+
+          /*
+           * Apps Script側でURLパラメータを取得できない場合に備え、
+           * 現在表示中の一周年祭へ通信キーを直接返します。
+           */
+          if (
+            data.type ===
+              "SAITO_ANNIVERSARY_BRIDGE_HELLO" &&
+            activeFacilityType ===
+              "anniversary" &&
+            event.source &&
+            typeof event.source.postMessage ===
+              "function"
+          ) {
+
+            event.source.postMessage(
+              {
+                type:
+                  "SAITO_ANNIVERSARY_BRIDGE_READY",
+                bridgeToken:
+                  bridgeToken
+              },
+              "*"
+            );
+
+            return;
+
+          }
 
           if (
             !data.bridgeToken ||
@@ -763,6 +796,8 @@
               );
 
             if (page === "portal") {
+
+              activeFacilityType = "";
 
               facilityFrame.classList.add(
                 "village-frame-hidden"
