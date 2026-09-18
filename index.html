@@ -1054,26 +1054,29 @@
       );
 
 
+      /*
+       * 入村口URLから外枠を新しく開いた場合は、
+       * 前回閉じた時の施設表示を復元せず、必ずPortalから開始する。
+       *
+       * 村民番号・一周年認証情報などは消さない。
+       * 村内での施設移動／施設からPortalへの帰村処理も従来どおり。
+       */
       openVillagePortal();
 
-      if (!restoreInitialView()) {
+      try {
 
-        try {
+        localStorage.setItem(
+          ACTIVE_VIEW_STORAGE_KEY,
+          "portal"
+        );
 
-          localStorage.setItem(
-            ACTIVE_VIEW_STORAGE_KEY,
-            "portal"
-          );
+      }
+      catch (error) {
 
-        }
-        catch (error) {
-
-          console.warn(
-            "表示状態を保存できませんでした。",
-            error
-          );
-
-        }
+        console.warn(
+          "初回表示状態をPortalへ設定できませんでした。",
+          error
+        );
 
       }
 
