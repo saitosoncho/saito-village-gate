@@ -149,6 +149,12 @@
       let pendingFacilityUrl = "";
       let facilityNavigationSerial = 0;
 
+      /*
+       * 一周年サイト二重読込防止ロック
+       * Portalへ戻るまで、同じ入場要求を1回だけ受け付ける。
+       */
+      let anniversaryOpenLocked = false;
+
       const bridgeToken =
         (
           window.crypto &&
@@ -378,6 +384,11 @@
         pendingFacilityUrl = "";
         activeFacilityType = "";
 
+        /*
+         * Portalへ戻った時点で、次回の一周年祭入場を許可する。
+         */
+        anniversaryOpenLocked = false;
+
         facilityNavigationSerial += 1;
 
         facilityFrame.classList.add(
@@ -516,10 +527,34 @@
 
         }
 
-        return loadFacilityFrame_(
-          targetUrl,
-          "anniversary"
-        );
+        /*
+         * スマホ環境などで同じ一周年祭入場要求が重複して届いても、
+         * facility iframe の src を二度設定しない。
+         *
+         * ここでは true を返して「要求自体は処理済み」と扱うことで、
+         * 呼び出し元の保存処理は従来どおり継続できる。
+         */
+        if (anniversaryOpenLocked) {
+
+          return true;
+
+        }
+
+        anniversaryOpenLocked = true;
+
+        const loaded =
+          loadFacilityFrame_(
+            targetUrl,
+            "anniversary"
+          );
+
+        if (!loaded) {
+
+          anniversaryOpenLocked = false;
+
+        }
+
+        return loaded;
 
       }
 
