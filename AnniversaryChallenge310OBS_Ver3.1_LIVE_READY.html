@@ -4,7 +4,7 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>310人入室チャレンジ OBS Ver.3.1 LIVE</title>
+  <title>310人入室チャレンジ OBS Ver.3.3 ANNIVERSARY SYNC</title>
   <style>
     :root{
       --gold:#f2d47c;
@@ -468,7 +468,7 @@
   </div>
 
   <div class="live-status" id="liveStatus">CONNECTING…</div>
-  <div class="obs-note">OBS VIEW / UI v3.1 LIVE</div>
+  <div class="obs-note">OBS VIEW / UI v3.3 ANNIVERSARY SYNC</div>
 </main>
 
 
@@ -480,7 +480,7 @@
      GASをデプロイしたあと、下のURLへウェブアプリURLを貼ってください。
      例: https://script.google.com/macros/s/XXXXXXXX/exec
   ========================================================== */
-  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx_dZMFQRttoa1-L8irGyt3n04S5Y3JXH0swirg9SS0n1LmQKWhweCvPSpjj1YyAA99/exec";
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWe_b5fM4xROEAlLP056YOXbpKoqu1hceCU07r4iVaaBDgjzcjsL0Wrj5f_V5WbETn/exec";
   const GOAL = 310;
   const POLL_MS = 2500;
 
@@ -543,32 +543,62 @@
     lastState = JSON.parse(JSON.stringify(state));
   }
 
-  // GitHub Pages → GAS はJSONPで取得。CORSの影響を受けにくい方式。
-  function loadState(){
+  // 一周年特設サイトGASの公開APIを直接取得。
+  // 管理画面と同じ AnniversaryChallenge310Service の状態を表示します。
+  async function loadState(){
+    const statusEl = document.getElementById('liveStatus');
+
     if(!GAS_WEB_APP_URL.startsWith('https://script.google.com/')){
-      const s=document.getElementById('liveStatus');
-      s.textContent='GAS URL 未設定'; s.className='live-status err';
+      statusEl.textContent='GAS URL 未設定';
+      statusEl.className='live-status err';
       return;
     }
-    const callback = `__saitoState_${Date.now()}_${requestSeq++}`;
-    const script = document.createElement('script');
-    const timeout = setTimeout(()=>finish(false),7000);
 
-    function finish(ok){
-      clearTimeout(timeout);
-      try{ delete window[callback]; }catch(e){}
-      script.remove();
-      const s=document.getElementById('liveStatus');
-      s.textContent=ok?'LIVE SYNC':'SYNC RETRY';
-      s.className='live-status '+(ok?'ok':'err');
+    try{
+      const url =
+        `${GAS_WEB_APP_URL}?action=challenge310State&_=${Date.now()}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+
+      if(!response.ok){
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if(!data || data.success !== true || !data.challenge){
+        throw new Error('challenge data not found');
+      }
+
+      const challenge = data.challenge;
+
+      const state = {
+        entryCount: Math.max(0, Number(challenge.currentCount) || 0),
+        missions: Array.from({length:12}, (_,idx) => {
+          const panel = Array.isArray(challenge.panels)
+            ? challenge.panels.find(
+                p => Number(p.panelNo) === idx + 1
+              )
+            : null;
+
+          return !!(panel && panel.unlocked);
+        })
+      };
+
+      renderState(state,!lastState);
+
+      statusEl.textContent='LIVE SYNC';
+      statusEl.className='live-status ok';
+
+    }catch(error){
+      console.error('[Challenge310 OBS]', error);
+      statusEl.textContent='SYNC RETRY';
+      statusEl.className='live-status err';
     }
-    window[callback] = data => {
-      renderState(data,!lastState);
-      finish(true);
-    };
-    script.onerror=()=>finish(false);
-    script.src = `${GAS_WEB_APP_URL}?action=challenge310State&callback=${encodeURIComponent(callback)}&_=${Date.now()}`;
-    document.body.appendChild(script);
   }
 
   loadState();
