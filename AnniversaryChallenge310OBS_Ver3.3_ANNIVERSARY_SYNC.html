@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>310人入室チャレンジ OBS Ver.3.3 ANNIVERSARY SYNC</title>
+  <style>
+    :root{
+      --gold:#f2d47c;
+      --gold2:#ffe9a9;
+      --ivory:#fff9ed;
+      --line:rgba(244,214,132,.45);
+      --glass:rgba(13,5,24,.72);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      width:100%;height:100%;margin:0;overflow:hidden;
+      background:#0b0512;
+      font-family:"Yu Gothic","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    }
+    body{display:flex;align-items:center;justify-content:center}
+
+    .stage{
+      position:relative;
+      height:100vh;
+      width:auto;
+      aspect-ratio:708/1536;
+      overflow:hidden;
+      background:#100719 url("https://raw.githubusercontent.com/saitosoncho/saito-village-gate/main/challenge310-bg.jpeg")
+        center/100% 100% no-repeat;
+      color:var(--ivory);
+    }
+
+    /* 下半分：歌詞・コメントの可読性だけ少し補助 */
+    .stage::after{
+      content:"";
+      position:absolute;z-index:1;left:0;right:0;bottom:0;height:48%;
+      pointer-events:none;
+      background:linear-gradient(to bottom,transparent,rgba(5,2,12,.05) 25%,rgba(5,2,12,.18));
+    }
+
+    /* ===== 上部全体：カードを並べず、一枚の柔らかな帯としてまとめる ===== */
+    .top-veil{
+      position:absolute;z-index:2;
+      top:5.9%;left:3.5%;right:3.5%;height:12.3%;
+      pointer-events:none;
+      background:
+        linear-gradient(90deg,
+          rgba(9,3,17,.80) 0%,
+          rgba(18,6,30,.69) 40%,
+          rgba(18,6,30,.69) 65%,
+          rgba(9,3,17,.82) 100%);
+      border-top:1px solid rgba(242,212,124,.32);
+      border-bottom:1px solid rgba(242,212,124,.32);
+      box-shadow:0 7px 22px rgba(0,0,0,.22);
+      border-radius:11px;
+    }
+
+    /* ===== タイトル：左。背景帯＋シャドウで必ず読ませる ===== */
+    .event-title{
+      position:absolute;z-index:5;
+      top:6.8%;left:5.2%;width:43%;
+      padding:13px 13px 12px 17px;
+      border:1px solid rgba(242,212,124,.50);
+      border-radius:15px;
+      background:linear-gradient(110deg,rgba(18,5,28,.86),rgba(43,13,52,.67));
+      box-shadow:0 7px 20px rgba(0,0,0,.24);
+      text-shadow:0 2px 3px #08030d,0 0 8px rgba(0,0,0,.9);
+    }
+    .event-title::before{
+      content:"";
+      position:absolute;left:0;top:1px;bottom:1px;width:2px;
+      background:linear-gradient(transparent,var(--gold2) 18%,var(--gold) 82%,transparent);
+      box-shadow:0 0 8px rgba(242,212,124,.55);
+    }
+    .kicker{
+      margin:0 0 4px;color:var(--gold2);
+      font-size:clamp(7px,.95vh,10px);font-weight:900;letter-spacing:.11em;
+    }
+    .title-main{
+      margin:0;
+      font-size:clamp(19px,2.75vh,30px);
+      line-height:1.07;font-weight:900;letter-spacing:.01em;
+      color:#fffaf0;
+      -webkit-text-stroke:.25px rgba(35,8,44,.85);
+    }
+    .title-sub{
+      display:flex;align-items:center;gap:6px;margin-top:7px;
+      color:var(--gold);font-size:clamp(5px,.69vh,7.5px);
+      font-weight:900;letter-spacing:.12em;white-space:nowrap;
+    }
+    .title-sub::before,.title-sub::after{
+      content:"";height:1px;width:18px;background:linear-gradient(90deg,transparent,var(--gold));
+    }
+    .title-sub::after{background:linear-gradient(90deg,var(--gold),transparent)}
+
+    /* ===== カウンター：背景なし・2段発光表示 ===== */
+    .counter{
+      position:absolute;z-index:5;
+      top:7.4%;right:4.0%;
+      width:42%;
+      padding:8px 8px 10px;
+      display:flex;flex-direction:column;align-items:center;
+      background:transparent;border:none;border-radius:0;box-shadow:none;
+      text-align:center;
+    }
+    .counter-head{
+      color:#ffe68a;
+      font-size:clamp(8px,1.08vh,12px);
+      font-weight:950;letter-spacing:.15em;
+      text-shadow:0 1px 3px #000,0 0 7px #ffd96c,0 0 16px rgba(255,124,225,.72);
+    }
+    .counter-sub{
+      margin-top:4px;color:#fffaf2;
+      font-size:clamp(6.5px,.86vh,9.5px);font-weight:900;
+      text-shadow:0 1px 3px #000,0 0 6px #fff,0 0 13px rgba(239,137,255,.68);
+    }
+    .count-row{
+      width:100%;margin-top:7px;
+      display:flex;flex-direction:column;align-items:center;
+      white-space:nowrap;
+    }
+    .count{
+      font-family:Georgia,"Times New Roman",serif;
+      font-size:clamp(76px,11vh,120px);
+      line-height:.78;font-weight:700;color:#fffaf0;
+      text-shadow:
+        0 3px 6px rgba(0,0,0,.95),
+        0 0 4px #fff,
+        0 0 11px rgba(255,170,238,.95),
+        0 0 25px rgba(226,86,225,.70),
+        0 0 40px rgba(121,80,255,.42);
+    }
+    .goal{
+      align-self:flex-end;
+      margin:-2px 10% 0 0;
+      padding:0;
+      color:#fff4d3;
+      font-size:clamp(15px,2.0vh,22px);font-weight:950;
+      text-shadow:0 2px 4px #000,0 0 6px #ffe498,0 0 14px rgba(255,121,222,.70);
+    }
+    .progress{
+      width:80%;height:6px;margin-top:8px;
+      border-radius:99px;overflow:visible;
+      background:rgba(4,1,13,.74);
+      box-shadow:0 0 0 1px rgba(255,255,255,.18),0 0 8px rgba(234,111,229,.28);
+    }
+    .progress > div{
+      width:32.26%;height:100%;
+      background:linear-gradient(90deg,#f36ad9,#ffb3ea,#ffe68d);
+      border-radius:inherit;
+      box-shadow:0 0 5px rgba(255,111,221,.95),0 0 12px rgba(255,111,221,.72);
+    }
+    .counter-meta{
+      width:82%;display:flex;justify-content:space-between;
+      margin-top:7px;color:#fff9ed;
+      font-size:clamp(6.5px,.88vh,9.5px);font-weight:950;
+      text-shadow:0 1px 3px #000,0 0 5px #fff,0 0 12px rgba(235,125,244,.58);
+    }
+
+    /* ===== ミッション：縦長・3列×4段 ===== */
+    .missions{
+      position:absolute;z-index:5;
+      top:30.5%;right:1.8%;width:48%;
+      border:1px solid rgba(242,212,124,.52);
+      border-radius:14px;
+      background:linear-gradient(180deg,rgba(24,8,37,.84),rgba(8,3,16,.80));
+      box-shadow:0 8px 22px rgba(0,0,0,.28);
+      overflow:hidden;
+      backdrop-filter:blur(2px);
+    }
+    .missions-head{
+      min-height:31px;padding:5px 8px;
+      display:flex;align-items:center;justify-content:space-between;gap:6px;
+      border-bottom:1px solid rgba(242,212,124,.26);
+      background:rgba(65,24,78,.27);
+    }
+    .missions-title{
+      margin:0;color:#fff9ed;
+      font-size:clamp(8px,1.03vh,11.5px);font-weight:900;
+      text-shadow:0 2px 4px #000;
+      white-space:nowrap;
+    }
+    .open-count{
+      flex:none;color:var(--gold2);
+      font-size:clamp(4.8px,.62vh,6.8px);font-weight:900;
+      padding:3px 6px;border:1px solid rgba(242,212,124,.42);
+      border-radius:999px;background:rgba(0,0,0,.20);
+      white-space:nowrap;
+    }
+    .mission-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+    }
+    .mission{
+      position:relative;min-width:0;height:48px;
+      padding:5px 6px 4px;
+      display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+      border-right:1px solid rgba(242,212,124,.17);
+      border-bottom:1px solid rgba(242,212,124,.17);
+      background:rgba(8,3,16,.10);
+    }
+    .mission:nth-child(3n){border-right:0}
+    .mission:nth-last-child(-n+3){border-bottom:0}
+    .mission{
+      opacity:.72;
+      background:rgba(5,2,12,.46);
+    }
+    .mission.open{
+      opacity:1;
+      background:
+        radial-gradient(circle at 50% 35%,rgba(255,221,132,.22),transparent 60%),
+        linear-gradient(135deg,rgba(152,72,174,.72),rgba(92,38,115,.62));
+      box-shadow:
+        inset 0 0 0 1px rgba(255,224,137,.52),
+        inset 0 0 16px rgba(255,180,225,.18),
+        0 0 9px rgba(255,204,112,.16);
+    }
+    .no{
+      color:var(--gold);font-size:clamp(6px,.77vh,8.5px);
+      font-weight:900;line-height:1;margin-bottom:5px;
+    }
+    .mission-text{
+      width:100%;
+      color:#fffaf1;
+      font-size:clamp(6.5px,.86vh,9.5px);
+      line-height:1.12;font-weight:900;
+      text-shadow:0 1px 3px #000,0 0 5px rgba(0,0,0,.85);
+      white-space:normal;
+      overflow-wrap:anywhere;
+    }
+    .state{
+      position:absolute;right:5px;top:5px;
+      color:rgba(255,255,255,.38);
+      font-size:clamp(4px,.50vh,5.5px);font-weight:900;
+    }
+    .mission.open .state{
+      color:#fff0a6;
+      font-size:clamp(4.5px,.58vh,6.2px);
+      text-shadow:0 0 4px #ffd96c,0 0 9px rgba(255,183,79,.75);
+    }
+    .mission:not(.open) .mission-text{
+      color:rgba(255,250,241,.62);
+      text-shadow:0 1px 3px #000;
+    }
+    .mission:not(.open) .no{
+      color:rgba(242,212,124,.62);
+    }
+    .mission.open .mission-text{
+      color:#fffdf4;
+      text-shadow:0 1px 3px #000,0 0 7px rgba(255,231,163,.32);
+    }
+    .mission.open .no{
+      color:#fff09a;
+      text-shadow:0 0 6px rgba(255,214,103,.65);
+    }
+
+
+    /* ===== 舞い桜：OBS向け軽量CSSアニメーション ===== */
+    .sakura-layer{
+      position:absolute;inset:0;z-index:4;
+      overflow:hidden;pointer-events:none;
+    }
+    .sakura{
+      position:absolute;top:-7%;
+      width:var(--size);height:calc(var(--size) * .72);
+      border-radius:75% 20% 70% 25%;
+      background:linear-gradient(135deg,rgba(255,235,246,.95),rgba(255,126,192,.90));
+      box-shadow:0 0 7px rgba(255,142,204,.48);
+      opacity:var(--opacity);
+      transform:rotate(var(--rot));
+      animation:sakuraFall var(--duration) linear var(--delay) infinite;
+      will-change:transform;
+    }
+    .sakura::after{
+      content:"";position:absolute;left:42%;top:18%;
+      width:18%;height:55%;border-radius:50%;
+      background:rgba(255,255,255,.25);
+      transform:rotate(-20deg);
+    }
+    @keyframes sakuraFall{
+      0%{
+        transform:translate3d(0,-8vh,0) rotate(var(--rot));
+      }
+      25%{
+        transform:translate3d(var(--drift1),25vh,0) rotate(calc(var(--rot) + 120deg));
+      }
+      55%{
+        transform:translate3d(var(--drift2),58vh,0) rotate(calc(var(--rot) + 260deg));
+      }
+      100%{
+        transform:translate3d(var(--drift3),112vh,0) rotate(calc(var(--rot) + 520deg));
+      }
+    }
+    @media (prefers-reduced-motion:reduce){
+      .sakura{animation:none;display:none}
+    }
+
+
+    /* ===== 村民歓迎ティッカー ===== */
+    .village-ticker{
+      position:absolute;
+      z-index:7;
+      left:0;right:0;
+      bottom:0;
+      height:32px;
+      overflow:hidden;
+      pointer-events:none;
+      background:linear-gradient(90deg,
+        rgba(70,5,24,.82),
+        rgba(132,14,45,.92) 18%,
+        rgba(91,7,31,.94) 82%,
+        rgba(55,3,20,.82));
+      border-top:1px solid rgba(255,219,121,.72);
+      border-bottom:1px solid rgba(255,219,121,.62);
+      box-shadow:
+        0 4px 14px rgba(0,0,0,.30),
+        0 0 12px rgba(255,189,74,.13);
+    }
+    .village-ticker::before,
+    .village-ticker::after{
+      content:"✦";
+      position:absolute;z-index:2;top:50%;
+      transform:translateY(-50%);
+      color:#ffe28a;
+      font-size:10px;
+      text-shadow:0 0 7px rgba(255,218,102,.9);
+    }
+    .village-ticker::before{left:8px}
+    .village-ticker::after{right:8px}
+    .ticker-track{
+      position:absolute;
+      top:0;left:0;
+      display:flex;align-items:center;
+      width:max-content;height:100%;
+      white-space:nowrap;
+      animation:tickerMove 46s linear infinite;
+      will-change:transform;
+    }
+    .ticker-group{
+      display:flex;
+      align-items:center;
+      flex-shrink:0;
+      height:100%;
+    }
+    .ticker-text{
+      display:inline-block;
+      padding:0 2.2em;
+      color:#ffe7a0;
+      font-size:clamp(10px,1.28vh,14px);
+      font-weight:950;
+      letter-spacing:.045em;
+      text-shadow:
+        0 1px 2px rgba(0,0,0,.95),
+        0 0 5px rgba(255,224,131,.85),
+        0 0 11px rgba(255,167,66,.45);
+    }
+    @keyframes tickerMove{
+      from{transform:translateX(0)}
+      to{transform:translateX(-50%)}
+    }
+
+    /* ===== ミッションOPEN時の祝福演出 ===== */
+    .mission.just-opened{
+      position:relative;
+      animation:missionOpenFlash 1.55s ease-out both;
+    }
+    .mission.just-opened::after{
+      content:"OPEN!";
+      position:absolute;z-index:4;
+      inset:0;
+      display:flex;align-items:center;justify-content:center;
+      color:#fff7c7;
+      font-size:clamp(10px,1.35vh,15px);
+      font-weight:1000;letter-spacing:.08em;
+      background:radial-gradient(circle,rgba(255,226,131,.32),rgba(214,78,185,.12) 50%,transparent 72%);
+      text-shadow:0 0 5px #fff,0 0 12px #ffd86c,0 0 22px #f46bd8;
+      pointer-events:none;
+      animation:openWord 1.25s ease-out both;
+    }
+    @keyframes missionOpenFlash{
+      0%{filter:brightness(1);transform:scale(1)}
+      22%{filter:brightness(2.25);transform:scale(1.045);box-shadow:0 0 22px rgba(255,224,117,.95)}
+      55%{filter:brightness(1.35);transform:scale(1.015)}
+      100%{filter:brightness(1);transform:scale(1)}
+    }
+    @keyframes openWord{
+      0%{opacity:0;transform:scale(.6)}
+      25%{opacity:1;transform:scale(1.08)}
+      72%{opacity:1}
+      100%{opacity:0;transform:scale(1.2)}
+    }
+
+
+    .count.bump{animation:countBump .42s ease-out}
+    @keyframes countBump{
+      0%{transform:scale(.92);filter:brightness(1)}
+      45%{transform:scale(1.08);filter:brightness(1.7)}
+      100%{transform:scale(1);filter:brightness(1)}
+    }
+    .live-status{
+      position:absolute;z-index:8;right:2.5%;bottom:34px;
+      font-size:clamp(4px,.5vh,6px);font-weight:900;letter-spacing:.08em;
+      color:rgba(255,255,255,.28);text-shadow:0 1px 2px #000;
+    }
+    .live-status.ok{color:rgba(196,255,211,.58)}
+    .live-status.err{color:rgba(255,184,184,.65)}
+
+    .obs-note{
+      position:absolute;z-index:8;right:2.5%;bottom:1%;
+      color:rgba(255,255,255,.22);font-size:clamp(4px,.5vh,6px);
+      letter-spacing:.08em;
+    }
+  </style>
+</head>
+<body>
+  <div class="sakura-layer" aria-hidden="true"><i class="sakura" style="left:4%;--size:16px;--opacity:0.82;--drift1:-28px;--drift2:40px;--drift3:-18px;--rot:18deg;--duration:13s;--delay:-8s"></i><i class="sakura" style="left:11%;--size:12px;--opacity:0.68;--drift1:34px;--drift2:-26px;--drift3:30px;--rot:-25deg;--duration:16s;--delay:-3s"></i><i class="sakura" style="left:18%;--size:18px;--opacity:0.78;--drift1:-45px;--drift2:38px;--drift3:-30px;--rot:48deg;--duration:18s;--delay:-12s"></i><i class="sakura" style="left:26%;--size:13px;--opacity:0.64;--drift1:26px;--drift2:-36px;--drift3:32px;--rot:12deg;--duration:14s;--delay:-6s"></i><i class="sakura" style="left:34%;--size:17px;--opacity:0.84;--drift1:-20px;--drift2:46px;--drift3:-28px;--rot:62deg;--duration:19s;--delay:-15s"></i><i class="sakura" style="left:42%;--size:11px;--opacity:0.58;--drift1:42px;--drift2:-30px;--drift3:36px;--rot:-18deg;--duration:15s;--delay:-9s"></i><i class="sakura" style="left:50%;--size:19px;--opacity:0.8;--drift1:-38px;--drift2:34px;--drift3:-42px;--rot:28deg;--duration:17s;--delay:-4s"></i><i class="sakura" style="left:58%;--size:13px;--opacity:0.67;--drift1:30px;--drift2:-42px;--drift3:26px;--rot:70deg;--duration:20s;--delay:-17s"></i><i class="sakura" style="left:66%;--size:16px;--opacity:0.76;--drift1:-32px;--drift2:40px;--drift3:-24px;--rot:-35deg;--duration:16s;--delay:-11s"></i><i class="sakura" style="left:74%;--size:12px;--opacity:0.62;--drift1:36px;--drift2:-28px;--drift3:34px;--rot:44deg;--duration:21s;--delay:-19s"></i><i class="sakura" style="left:82%;--size:18px;--opacity:0.79;--drift1:-44px;--drift2:36px;--drift3:-30px;--rot:8deg;--duration:15s;--delay:-7s"></i><i class="sakura" style="left:90%;--size:14px;--opacity:0.69;--drift1:28px;--drift2:-38px;--drift3:42px;--rot:55deg;--duration:18s;--delay:-13s"></i><i class="sakura" style="left:97%;--size:17px;--opacity:0.74;--drift1:-36px;--drift2:32px;--drift3:-26px;--rot:-42deg;--duration:17s;--delay:-5s"></i><i class="sakura" style="left:22%;--size:10px;--opacity:0.52;--drift1:44px;--drift2:-24px;--drift3:28px;--rot:25deg;--duration:22s;--delay:-20s"></i><i class="sakura" style="left:47%;--size:12px;--opacity:0.57;--drift1:-24px;--drift2:34px;--drift3:-36px;--rot:76deg;--duration:23s;--delay:-10s"></i><i class="sakura" style="left:70%;--size:10px;--opacity:0.54;--drift1:32px;--drift2:-30px;--drift3:24px;--rot:-12deg;--duration:20s;--delay:-16s"></i><i class="sakura" style="left:87%;--size:11px;--opacity:0.56;--drift1:-30px;--drift2:42px;--drift3:-22px;--rot:36deg;--duration:24s;--delay:-22s"></i></div>
+<main class="stage">
+<section class="event-title">
+    <p class="kicker">齋藤村 建村一周年記念</p>
+    <h1 class="title-main">310人入室<br>チャレンジ</h1>
+    <div class="title-sub">ANNIVERSARY CHALLENGE</div>
+  </section>
+
+  <section class="counter">
+    <div class="counter-head">CURRENT ENTRY</div>
+    <div class="counter-sub">現在の入室人数</div>
+    <div class="count-row">
+      <span class="count" id="entryCount">100</span>
+      <span class="goal">/ 310人</span>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+    <div class="counter-meta">
+      <span id="progressText">達成率 32%</span>
+      <span id="remainingText">あと210人</span>
+    </div>
+  </section>
+
+  <section class="missions">
+    <div class="missions-head">
+      <h2 class="missions-title">パネル開けミッション</h2>
+      <span class="open-count" id="openCount">2 / 12 OPEN</span>
+    </div>
+    <div class="mission-grid">
+      <div class="mission" id="mission-1" data-mission="1"><span class="no">01</span><span class="mission-text">入室50人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-2" data-mission="2"><span class="no">02</span><span class="mission-text">入室100人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-3" data-mission="3"><span class="no">03</span><span class="mission-text">入室150人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-4" data-mission="4"><span class="no">04</span><span class="mission-text">入室200人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-5" data-mission="5"><span class="no">05</span><span class="mission-text">入室250人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-6" data-mission="6"><span class="no">06</span><span class="mission-text">入室300人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-7" data-mission="7"><span class="no">07</span><span class="mission-text">初見31人</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-8" data-mission="8"><span class="no">08</span><span class="mission-text">リクエスト10曲</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-9" data-mission="9"><span class="no">09</span><span class="mission-text">おめでとう×31</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-10" data-mission="10"><span class="no">10</span><span class="mission-text">31都道府県</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-11" data-mission="11"><span class="no">11</span><span class="mission-text">いいところ×31</span><span class="state">LOCK</span></div>
+      <div class="mission" id="mission-12" data-mission="12"><span class="no">12</span><span class="mission-text">コメント完成</span><span class="state">LOCK</span></div>
+    </div>
+  </section>
+
+  
+  <div class="village-ticker" aria-label="齋藤村からのお知らせ">
+    <div class="ticker-track">
+      <div class="ticker-group"><div class="ticker-text">✦　新規フォローをしてくれたあなたは、もう齋藤村の村民です！新規入村お待ちしてます　✦　新規名誉村民（メンバーシップ）も随時募集中！　✦　入室してくれてありがとう、あなたとの出会いに感謝です！　✦　齋藤村へようこそ、ゆっくりしていってね　</div></div>
+      <div class="ticker-group" aria-hidden="true"><div class="ticker-text">✦　新規フォローをしてくれたあなたは、もう齋藤村の村民です！新規入村お待ちしてます　✦　新規名誉村民（メンバーシップ）も随時募集中！　✦　入室してくれてありがとう、あなたとの出会いに感謝です！　✦　齋藤村へようこそ、ゆっくりしていってね　</div></div>
+    </div>
+  </div>
+  </div>
+
+  <div class="live-status" id="liveStatus">CONNECTING…</div>
+  <div class="obs-note">OBS VIEW / UI v3.3 ANNIVERSARY SYNC</div>
+</main>
+
+
+
+
+<script>
+  /* =========================================================
+     ここだけ変更：
+     GASをデプロイしたあと、下のURLへウェブアプリURLを貼ってください。
+     例: https://script.google.com/macros/s/XXXXXXXX/exec
+  ========================================================== */
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWe_b5fM4xROEAlLP056YOXbpKoqu1hceCU07r4iVaaBDgjzcjsL0Wrj5f_V5WbETn/exec";
+  const GOAL = 310;
+  const POLL_MS = 2500;
+
+  let lastState = null;
+  let pollTimer = null;
+  let requestSeq = 0;
+
+  function celebrateMissionOpen(target){
+    let el = target;
+    if (typeof target === 'number') el = document.getElementById(`mission-${target}`);
+    if (!el) return;
+    el.classList.add('open','just-opened');
+    window.setTimeout(() => el.classList.remove('just-opened'),1600);
+  }
+
+  function animateCount(from,to){
+    const el = document.getElementById('entryCount');
+    if (from === to) return;
+    const duration = 500;
+    const start = performance.now();
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+    function frame(now){
+      const p = Math.min(1,(now-start)/duration);
+      const eased = 1-Math.pow(1-p,3);
+      el.textContent = Math.round(from+(to-from)*eased);
+      if(p<1) requestAnimationFrame(frame);
+      else el.textContent = to;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function renderState(state, firstLoad=false){
+    const count = Math.max(0, Number(state.entryCount)||0);
+    const prevCount = lastState ? Number(lastState.entryCount)||0 : count;
+
+    if(firstLoad) document.getElementById('entryCount').textContent = count;
+    else animateCount(prevCount,count);
+
+    const pct = Math.min(100, Math.max(0, count/GOAL*100));
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `達成率 ${Math.floor(pct)}%`;
+    document.getElementById('remainingText').textContent = `あと${Math.max(0,GOAL-count)}人`;
+
+    const opens = Array.isArray(state.missions) ? state.missions.map(Boolean) : Array(12).fill(false);
+    let openTotal = 0;
+    opens.forEach((isOpen,idx)=>{
+      const n = idx+1;
+      const el = document.getElementById(`mission-${n}`);
+      if(!el) return;
+      const wasOpen = lastState && Array.isArray(lastState.missions) ? !!lastState.missions[idx] : isOpen;
+      el.classList.toggle('open',isOpen);
+      const st = el.querySelector('.state');
+      if(st) st.textContent = isOpen ? 'OPEN' : 'LOCK';
+      if(isOpen) openTotal++;
+      if(!firstLoad && isOpen && !wasOpen) celebrateMissionOpen(n);
+    });
+    document.getElementById('openCount').textContent = `${openTotal} / 12 OPEN`;
+    lastState = JSON.parse(JSON.stringify(state));
+  }
+
+  // 一周年特設サイトGASの公開APIを直接取得。
+  // 管理画面と同じ AnniversaryChallenge310Service の状態を表示します。
+  async function loadState(){
+    const statusEl = document.getElementById('liveStatus');
+
+    if(!GAS_WEB_APP_URL.startsWith('https://script.google.com/')){
+      statusEl.textContent='GAS URL 未設定';
+      statusEl.className='live-status err';
+      return;
+    }
+
+    try{
+      const url =
+        `${GAS_WEB_APP_URL}?action=challenge310State&_=${Date.now()}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+
+      if(!response.ok){
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if(!data || data.success !== true || !data.challenge){
+        throw new Error('challenge data not found');
+      }
+
+      const challenge = data.challenge;
+
+      const state = {
+        entryCount: Math.max(0, Number(challenge.currentCount) || 0),
+        missions: Array.from({length:12}, (_,idx) => {
+          const panel = Array.isArray(challenge.panels)
+            ? challenge.panels.find(
+                p => Number(p.panelNo) === idx + 1
+              )
+            : null;
+
+          return !!(panel && panel.unlocked);
+        })
+      };
+
+      renderState(state,!lastState);
+
+      statusEl.textContent='LIVE SYNC';
+      statusEl.className='live-status ok';
+
+    }catch(error){
+      console.error('[Challenge310 OBS]', error);
+      statusEl.textContent='SYNC RETRY';
+      statusEl.className='live-status err';
+    }
+  }
+
+  loadState();
+  pollTimer=setInterval(loadState,POLL_MS);
+</script>
+
+</body>
+</html>
