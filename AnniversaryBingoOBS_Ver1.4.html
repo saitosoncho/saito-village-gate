@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>齋藤村ビンゴ大会 OBS Ver.1.4</title>
+  <style>
+    :root{
+      --ivory:#fffaf2;
+      --gold:#f7d77e;
+      --gold2:#fff0b5;
+      --purple:#7d4bb3;
+      --glass:rgba(31,13,46,.52);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      width:100%;height:100%;margin:0;overflow:hidden;
+      background:#100719;
+      font-family:"Yu Gothic","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    }
+    body{display:flex;align-items:center;justify-content:center}
+
+    .stage{
+      position:relative;
+      height:100vh;
+      width:auto;
+      aspect-ratio:708/1536;
+      overflow:hidden;
+      background:#100719 url("https://raw.githubusercontent.com/saitosoncho/saito-village-gate/main/bingo-obs-bg.jpeg") center/100% 100% no-repeat;
+      color:var(--ivory);
+    }
+
+    /* ===== 上部：一周年ビンゴ大会タイトル ===== */
+    .event-title{
+      position:absolute;z-index:7;
+      top:2.7%;left:3.8%;
+      width:54%;
+      padding:8px 13px 10px 16px;
+      border-radius:17px;
+      background:
+        radial-gradient(ellipse at 35% 50%,rgba(85,20,95,.72),rgba(40,8,56,.38) 62%,transparent 82%);
+      border:0;
+      box-shadow:none;
+      text-shadow:0 2px 5px rgba(33,8,44,.95),0 0 10px rgba(255,255,255,.25);
+      overflow:visible;
+    }
+    .event-title::before{
+      content:"✦";
+      position:absolute;left:-7px;top:-9px;
+      color:#fff1a5;
+      font-size:17px;
+      text-shadow:0 0 6px #fff,0 0 13px #ffcd64,0 0 20px #ef79dc;
+      transform:rotate(-16deg);
+    }
+    .event-title::after{
+      content:"❀";
+      position:absolute;right:-8px;bottom:-10px;
+      color:#ffd4eb;
+      font-size:18px;
+      text-shadow:0 0 7px #fff,0 0 14px #f58ac8;
+      transform:rotate(12deg);
+    }
+    .kicker{
+      margin:0 0 3px;
+      color:#ffe9a9;
+      font-size:clamp(7px,.92vh,10px);
+      font-weight:1000;
+      letter-spacing:.10em;
+    }
+    .title-main{
+      margin:0;
+      color:#fffaf0;
+      font-size:clamp(22px,2.85vh,32px);
+      line-height:1;
+      font-weight:1000;
+      letter-spacing:.035em;
+      -webkit-text-stroke:.35px rgba(75,16,77,.9);
+      text-shadow:
+        0 2px 4px rgba(32,5,40,.95),
+        0 0 7px rgba(255,255,255,.50),
+        0 0 15px rgba(246,116,211,.58),
+        0 0 22px rgba(255,205,93,.30);
+    }
+    .title-sub{
+      display:flex;align-items:center;gap:6px;
+      margin-top:6px;
+      color:#ffe79a;
+      font-size:clamp(5px,.63vh,7px);
+      font-weight:950;
+      letter-spacing:.12em;
+      white-space:nowrap;
+    }
+    .title-sub::before{
+      content:"";
+      width:19px;height:1px;
+      background:linear-gradient(90deg,#ffe79a,transparent);
+      box-shadow:0 0 5px #ffd36b;
+    }
+
+    /* ===== スタンプ合言葉 ===== */
+    .stamp-word{
+      position:absolute;z-index:7;
+      top:2.9%;right:3.5%;
+      width:37%;
+      padding:7px 8px 9px;
+      text-align:center;
+      border-radius:16px;
+      background:
+        radial-gradient(ellipse at 50% 50%,rgba(76,16,84,.76),rgba(45,8,58,.38) 68%,transparent 88%);
+      border:0;
+      box-shadow:none;
+    }
+    .stamp-head{
+      color:#fff0b2;
+      font-size:clamp(6px,.78vh,8.5px);
+      font-weight:1000;
+      letter-spacing:.08em;
+      text-shadow:0 1px 3px #2a082e;
+    }
+    .stamp-keyword{
+      margin-top:3px;
+      color:#fff4c7;
+      font-size:clamp(17px,2.28vh,25px);
+      line-height:1.08;
+      font-weight:1000;
+      letter-spacing:.03em;
+      -webkit-text-stroke:.25px rgba(77,18,75,.88);
+      text-shadow:
+        0 2px 4px rgba(34,5,41,.95),
+        0 0 6px #fff,
+        0 0 13px rgba(255,101,211,.95),
+        0 0 24px rgba(255,199,77,.72),
+        0 0 34px rgba(236,91,221,.42);
+      white-space:nowrap;
+    }
+
+    /* ===== 直近5番号：最新番号の上 ===== */
+    .recent-panel{
+      position:absolute;z-index:6;
+      top:11.4%;left:16%;width:68%;
+      padding:4px 9px 5px;
+      border-radius:15px;
+      background:linear-gradient(110deg,rgba(39,15,55,.66),rgba(72,34,87,.45));
+      border:1px solid rgba(255,236,182,.54);
+      box-shadow:0 6px 18px rgba(29,8,42,.22),0 0 9px rgba(255,211,129,.10);
+      backdrop-filter:blur(2px);
+    }
+    .recent-label{
+      margin-bottom:3px;
+      text-align:center;
+      color:#fff3c8;
+      font-size:clamp(6px,.77vh,8.5px);
+      font-weight:1000;
+      letter-spacing:.12em;
+      text-shadow:0 1px 3px rgba(0,0,0,.78);
+    }
+    .recent-row{
+      display:flex;align-items:center;justify-content:center;gap:6px;
+    }
+    .recent-ball{
+      width:clamp(34px,4.65vh,51px);
+      height:clamp(34px,4.65vh,51px);
+      flex:none;
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background:radial-gradient(circle at 35% 28%,#fff 0 8%,#fff8ec 10%,#f4ddec 65%,#c993c4 100%);
+      border:1px solid rgba(255,247,211,.95);
+      box-shadow:0 2px 7px rgba(28,7,38,.35),0 0 7px rgba(255,228,166,.28);
+      color:#51245e;
+      font-family:Georgia,"Times New Roman",serif;
+      font-size:clamp(13px,1.78vh,20px);
+      font-weight:800;
+      text-shadow:0 1px 0 #fff;
+    }
+    .recent-ball.latest{
+      box-shadow:0 2px 7px rgba(28,7,38,.35),0 0 10px rgba(255,225,126,.9),0 0 18px rgba(231,130,235,.58);
+    }
+    .recent-ball.placeholder{opacity:.42}
+    .recent-row.shift{animation:recentShift .55s ease-out}
+    @keyframes recentShift{
+      0%{opacity:.25;transform:translateX(12px)}
+      100%{opacity:1;transform:translateX(0)}
+    }
+
+    /* ===== 最新番号：村長の指先付近 ===== */
+    .latest-wrap{
+      position:absolute;z-index:6;
+      top:21.4%;left:25%;width:48%;
+      display:flex;flex-direction:column;align-items:center;
+      pointer-events:none;
+    }
+    .latest-label{
+      margin-bottom:6px;
+      color:#fff8e7;
+      font-size:clamp(8px,1.02vh,11.5px);
+      font-weight:1000;
+      letter-spacing:.16em;
+      text-shadow:0 2px 4px rgba(42,11,56,.95),0 0 8px rgba(255,255,255,.55);
+    }
+    .ball-shell{
+      position:relative;
+      width:clamp(108px,15.4vh,168px);
+      height:clamp(108px,15.4vh,168px);
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background:
+        radial-gradient(circle at 34% 27%,rgba(255,255,255,.98) 0 7%,rgba(255,255,255,.58) 8%,transparent 23%),
+        radial-gradient(circle at 50% 44%,rgba(255,252,241,.97),rgba(250,226,247,.94) 58%,rgba(196,139,210,.94) 100%);
+      border:2px solid rgba(255,246,207,.95);
+      box-shadow:
+        0 8px 24px rgba(42,9,56,.34),
+        0 0 0 4px rgba(255,255,255,.16),
+        0 0 24px rgba(255,223,151,.72),
+        0 0 48px rgba(225,134,237,.38);
+    }
+    .ball-shell::after{
+      content:"";
+      position:absolute;inset:8%;border-radius:50%;
+      border:1px solid rgba(121,67,139,.22);
+    }
+    .latest-number{
+      position:relative;z-index:2;
+      font-family:Georgia,"Times New Roman",serif;
+      color:#4d245e;
+      font-size:clamp(70px,9.7vh,108px);
+      line-height:1;
+      font-weight:800;
+      text-shadow:0 2px 0 rgba(255,255,255,.9),0 0 7px rgba(255,255,255,.85);
+    }
+    .latest-number.empty{
+      font-size:clamp(33px,4.6vh,50px);
+      color:rgba(77,36,94,.56);
+    }
+
+    /* 公開時演出 */
+    .latest-wrap.reveal .ball-shell{animation:ballReveal 1.35s cubic-bezier(.18,.8,.2,1) both}
+    .latest-wrap.reveal .latest-label{animation:labelFlash 1.15s ease-out both}
+    .latest-wrap.reveal::before,
+    .latest-wrap.reveal::after{
+      content:"✦";
+      position:absolute;z-index:9;
+      top:45%;left:50%;
+      color:#fff2a8;
+      font-size:30px;
+      text-shadow:0 0 8px #fff,0 0 18px #ffd66f,0 0 28px #e77de7;
+      animation:sparkBurst 1.3s ease-out both;
+    }
+    .latest-wrap.reveal::after{animation-delay:.08s;transform:rotate(45deg)}
+    @keyframes ballReveal{
+      0%{opacity:0;transform:scale(.35) rotate(-12deg);filter:brightness(2.2)}
+      38%{opacity:1;transform:scale(1.18) rotate(3deg);filter:brightness(1.75)}
+      68%{transform:scale(.96);filter:brightness(1.15)}
+      100%{transform:scale(1);filter:brightness(1)}
+    }
+    @keyframes labelFlash{
+      0%{opacity:.2;letter-spacing:.28em}
+      45%{opacity:1;text-shadow:0 0 10px #fff,0 0 22px #ffd976}
+      100%{opacity:1;letter-spacing:.16em}
+    }
+    @keyframes sparkBurst{
+      0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+      25%{opacity:1}
+      100%{opacity:0;transform:translate(-190%,-170%) scale(1.3) rotate(120deg)}
+    }
+
+    /* ===== 小さな統計 ===== */
+    .stats{
+      position:absolute;z-index:6;
+      top:38.6%;left:21%;width:62%;
+      display:flex;align-items:center;justify-content:center;gap:9px;
+      padding:5px 9px;
+      border-radius:999px;
+      color:#fffaf0;
+      background:rgba(42,17,56,.58);
+      border:1px solid rgba(255,237,183,.42);
+      box-shadow:0 4px 12px rgba(28,8,38,.18);
+      backdrop-filter:blur(2px);
+      font-size:clamp(6px,.82vh,9px);
+      font-weight:1000;
+      letter-spacing:.03em;
+      text-shadow:0 1px 3px rgba(0,0,0,.85);
+      white-space:nowrap;
+    }
+    .stats strong{color:#fff0a8;font-size:1.12em}
+    .divider{opacity:.55}
+
+    .live-status{
+      position:absolute;z-index:8;
+      right:2.2%;top:1.1%;
+      color:rgba(255,255,255,.38);
+      font-size:clamp(4px,.50vh,6px);
+      font-weight:900;letter-spacing:.08em;
+      text-shadow:0 1px 2px #000;
+    }
+    .live-status.ok{color:rgba(225,255,229,.58)}
+    .live-status.err{color:rgba(255,206,206,.72)}
+
+    @media (prefers-reduced-motion:reduce){
+      .latest-wrap.reveal .ball-shell,
+      .latest-wrap.reveal .latest-label,
+      .latest-wrap.reveal::before,
+      .latest-wrap.reveal::after,
+      .recent-row.shift{animation:none}
+    }
+  
+/* ===== Ver.1.4 VISUAL POLISH =====
+   Layout/positions and latest-ball size are intentionally unchanged.
+*/
+.title-main{
+  color:#fff7df !important;
+  -webkit-text-stroke:.35px rgba(255,211,115,.72);
+  text-shadow:
+    0 1px 0 rgba(74,24,74,.95),
+    0 0 5px rgba(255,231,160,.78),
+    0 0 12px rgba(255,121,218,.55),
+    0 0 22px rgba(156,78,255,.30) !important;
+}
+.title-kicker,.title-sub{
+  color:#ffe5a2 !important;
+  text-shadow:0 0 5px rgba(255,211,112,.62),0 1px 2px rgba(40,10,50,.95) !important;
+}
+.stamp-word::before,.stamp-word::after{
+  content:"";
+  position:absolute;
+  left:8%;right:8%;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,225,132,.9),rgba(255,135,218,.85),rgba(255,225,132,.9),transparent);
+  box-shadow:0 0 6px rgba(255,180,220,.55);
+}
+.stamp-word::before{top:5px}
+.stamp-word::after{bottom:5px}
+.stamp-main{
+  color:#fff6d5 !important;
+  -webkit-text-stroke:.25px rgba(255,214,125,.6);
+  text-shadow:
+    0 1px 2px rgba(53,8,53,.95),
+    0 0 7px rgba(255,237,183,.72),
+    0 0 14px rgba(255,91,204,.82),
+    0 0 25px rgba(255,185,88,.42) !important;
+}
+
+.recent-panel{
+  border:1px solid rgba(255,222,139,.76) !important;
+  background:
+    linear-gradient(135deg,rgba(65,20,80,.64),rgba(54,24,78,.48)) !important;
+  box-shadow:
+    inset 0 0 16px rgba(255,185,230,.09),
+    0 0 0 1px rgba(255,132,217,.16),
+    0 0 10px rgba(255,191,218,.20),
+    0 7px 16px rgba(27,7,39,.20) !important;
+}
+.recent-label{
+  color:#fff1bd !important;
+  text-shadow:0 0 5px rgba(255,216,123,.75),0 1px 2px rgba(42,10,49,.95) !important;
+}
+.recent-ball{
+  border:1px solid rgba(255,232,180,.74) !important;
+  background:
+    radial-gradient(circle at 34% 27%,rgba(255,255,255,.58) 0 8%,transparent 9%),
+    radial-gradient(circle at 50% 42%,rgba(255,249,250,.54),rgba(224,202,235,.54) 66%,rgba(160,112,186,.46) 100%) !important;
+  color:#4b275c !important;
+  font-weight:900 !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.7);
+  box-shadow:
+    inset 0 -5px 10px rgba(92,47,116,.13),
+    inset 0 3px 8px rgba(255,255,255,.35),
+    0 0 7px rgba(255,221,173,.18) !important;
+}
+.recent-ball:not(.empty){
+  color:#3c174e !important;
+  border-color:rgba(255,224,132,.94) !important;
+  box-shadow:
+    inset 0 -5px 10px rgba(92,47,116,.12),
+    inset 0 3px 8px rgba(255,255,255,.48),
+    0 0 7px rgba(255,224,137,.65),
+    0 0 13px rgba(255,125,214,.34) !important;
+}
+
+.latest-label{
+  color:#fff0b7 !important;
+  font-weight:900 !important;
+  letter-spacing:.14em !important;
+  text-shadow:
+    0 1px 2px rgba(52,11,54,.95),
+    0 0 6px rgba(255,221,131,.75),
+    0 0 11px rgba(255,128,213,.34) !important;
+}
+.latest-ball{
+  border-color:rgba(255,223,128,.94) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(255,255,255,.35),
+    inset 0 -12px 24px rgba(148,76,170,.10),
+    0 0 0 2px rgba(255,151,219,.22),
+    0 0 10px rgba(255,222,124,.62),
+    0 0 22px rgba(255,126,213,.36) !important;
+  animation:luxBreath 3.2s ease-in-out infinite;
+}
+.latest-ball::after{
+  content:"";
+  position:absolute;
+  inset:-8px;
+  border-radius:50%;
+  border:1px solid rgba(255,219,121,.55);
+  box-shadow:0 0 10px rgba(255,209,114,.28),inset 0 0 8px rgba(255,149,220,.18);
+  pointer-events:none;
+}
+.latest-number{
+  color:#48214f !important;
+  font-weight:950 !important;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.92),
+    0 0 3px rgba(255,255,255,.75) !important;
+}
+.latest-ball.reveal{
+  animation:luxReveal .92s cubic-bezier(.2,.8,.2,1),luxBreath 3.2s ease-in-out .92s infinite !important;
+}
+
+.stats{
+  border:1px solid rgba(255,221,137,.64) !important;
+  background:linear-gradient(90deg,rgba(63,25,75,.70),rgba(49,20,65,.84),rgba(63,25,75,.70)) !important;
+  box-shadow:0 0 8px rgba(255,184,218,.20),inset 0 0 10px rgba(255,255,255,.035) !important;
+}
+.stats::before,.stats::after{
+  content:"❀";
+  color:#ffd98e;
+  text-shadow:0 0 6px rgba(255,113,204,.75);
+  font-size:.85em;
+}
+.stats strong,.stats b{
+  color:#fff0ad !important;
+  text-shadow:0 0 5px rgba(255,216,118,.55);
+}
+
+@keyframes luxBreath{
+  0%,100%{filter:brightness(1); transform:scale(1)}
+  50%{filter:brightness(1.045); transform:scale(1.006)}
+}
+@keyframes luxReveal{
+  0%{transform:scale(.86);filter:brightness(1.55)}
+  45%{transform:scale(1.07);filter:brightness(1.22)}
+  72%{transform:scale(.985);filter:brightness(1.08)}
+  100%{transform:scale(1);filter:brightness(1)}
+}
+
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="event-title">
+    <p class="kicker">齋藤村 建村一周年記念</p>
+    <h1 class="title-main">ビンゴ大会</h1>
+    <div class="title-sub">SAITO VILLAGE 1st ANNIVERSARY</div>
+  </section>
+
+  <section class="stamp-word">
+    <div class="stamp-head">🌸 STAMP KEYWORD｜スタンプの合言葉 🌸</div>
+    <div class="stamp-keyword">ビンゴで乾杯</div>
+  </section>
+
+  <section class="recent-panel">
+    <div class="recent-label">✦ 直近の番号 ✦</div>
+    <div class="recent-row" id="recentRow">
+      <span class="recent-ball placeholder">--</span>
+      <span class="recent-ball placeholder">--</span>
+      <span class="recent-ball placeholder">--</span>
+      <span class="recent-ball placeholder">--</span>
+      <span class="recent-ball placeholder">--</span>
+    </div>
+  </section>
+
+  <section class="latest-wrap" id="latestWrap">
+    <div class="latest-label">最新番号</div>
+    <div class="ball-shell">
+      <span class="latest-number empty" id="latestNumber">―</span>
+    </div>
+  </section>
+
+  <div class="stats">
+    <span>公開済み <strong id="publishedCount">0</strong> / 75</span>
+    <span class="divider">｜</span>
+    <span>BINGO <strong id="bingoCount">0</strong>人</span>
+  </div>
+
+  <div class="live-status" id="liveStatus">CONNECTING…</div>
+</main>
+
+<script>
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWe_b5fM4xROEAlLP056YOXbpKoqu1hceCU07r4iVaaBDgjzcjsL0Wrj5f_V5WbETn/exec";
+  const POLL_MS = 2500;
+  const RECENT_COUNT = 5;
+
+  let lastState = null;
+  let pollBusy = false;
+
+  function normalizeState(data){
+    const bingo = data && data.bingo ? data.bingo : {};
+    const nums = Array.isArray(bingo.publishedNumbers)
+      ? bingo.publishedNumbers.map(Number).filter(n => Number.isFinite(n) && n >= 1 && n <= 75)
+      : [];
+
+    return {
+      status: String(bingo.status || ''),
+      latestNumber: (bingo.latestNumber !== null && bingo.latestNumber !== '' && Number.isFinite(Number(bingo.latestNumber))) ? Number(bingo.latestNumber) : null,
+      latestDrawId: String(bingo.latestDrawId || ''),
+      publishedNumbers: nums,
+      publishedCount: Math.max(0, Number(bingo.publishedCount) || 0),
+      bingoPlayerCount: Math.max(0, Number(bingo.bingoPlayerCount) || 0)
+    };
+  }
+
+  function renderRecent(numbers, animate=false){
+    const row = document.getElementById('recentRow');
+    const recent = numbers.slice(-RECENT_COUNT);
+    const padded = Array(Math.max(0, RECENT_COUNT - recent.length)).fill(null).concat(recent);
+
+    row.innerHTML = padded.map((num, idx) => {
+      if(num === null){
+        return '<span class="recent-ball placeholder">--</span>';
+      }
+      const latestClass = idx === padded.length - 1 ? ' latest' : '';
+      return `<span class="recent-ball${latestClass}">${num}</span>`;
+    }).join('');
+
+    if(animate){
+      row.classList.remove('shift');
+      void row.offsetWidth;
+      row.classList.add('shift');
+      window.setTimeout(() => row.classList.remove('shift'),600);
+    }
+  }
+
+  function playReveal(){
+    const wrap = document.getElementById('latestWrap');
+    wrap.classList.remove('reveal');
+    void wrap.offsetWidth;
+    wrap.classList.add('reveal');
+    window.setTimeout(() => wrap.classList.remove('reveal'),1500);
+  }
+
+  function renderState(state, firstLoad=false){
+    const numberEl = document.getElementById('latestNumber');
+
+    if(state.latestNumber === null){
+      numberEl.textContent = '―';
+      numberEl.classList.add('empty');
+    }else{
+      numberEl.textContent = state.latestNumber;
+      numberEl.classList.remove('empty');
+    }
+
+    document.getElementById('publishedCount').textContent = state.publishedCount;
+    document.getElementById('bingoCount').textContent = state.bingoPlayerCount;
+
+    const isNewDraw =
+      !firstLoad &&
+      !!state.latestDrawId &&
+      !!lastState &&
+      state.latestDrawId !== lastState.latestDrawId;
+
+    renderRecent(state.publishedNumbers,isNewDraw);
+
+    if(isNewDraw){
+      playReveal();
+    }
+
+    lastState = JSON.parse(JSON.stringify(state));
+  }
+
+  async function loadState(){
+    if(pollBusy) return;
+    pollBusy = true;
+
+    const statusEl = document.getElementById('liveStatus');
+
+    try{
+      const url = `${GAS_WEB_APP_URL}?action=bingoObsState&_=${Date.now()}`;
+      const response = await fetch(url,{
+        method:'GET',
+        cache:'no-store',
+        redirect:'follow'
+      });
+
+      if(!response.ok){
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      if(!data || data.success !== true || !data.bingo){
+        throw new Error('bingo data not found');
+      }
+
+      const state = normalizeState(data);
+      renderState(state,!lastState);
+
+      statusEl.textContent = 'LIVE SYNC';
+      statusEl.className = 'live-status ok';
+    }catch(error){
+      console.error('[Bingo OBS]',error);
+      statusEl.textContent = 'SYNC RETRY';
+      statusEl.className = 'live-status err';
+    }finally{
+      pollBusy = false;
+    }
+  }
+
+  loadState();
+  setInterval(loadState,POLL_MS);
+</script>
+</body>
+</html>
