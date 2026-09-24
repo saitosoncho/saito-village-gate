@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Voyage Control Ver.1.1</title>
+  <style>
+    :root {
+      --navy: #102348;
+      --navy-2: #1e3768;
+      --gold: #c99a45;
+      --gold-light: #f4d99d;
+      --paper: #fffdf8;
+      --muted: #75809a;
+      --line: rgba(20,42,82,.14);
+      --shadow: 0 18px 50px rgba(15,34,70,.13);
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans JP", sans-serif;
+      color: var(--navy);
+      background:
+        radial-gradient(circle at 82% 4%, rgba(255,214,228,.72), transparent 28rem),
+        linear-gradient(145deg, #eaf4ff, #fff8ee 58%, #f5e9f2);
+    }
+    button { font: inherit; }
+    .shell { width: min(1120px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 44px; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      margin-bottom: 18px; padding: 20px 24px; border: 1px solid rgba(255,255,255,.7);
+      border-radius: 22px; background: rgba(255,255,255,.72); box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .eyebrow { margin: 0 0 3px; color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .22em; }
+    h1 { margin: 0; font: 700 clamp(28px,4vw,44px)/1 Georgia, serif; letter-spacing: .01em; }
+    .sync { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: 13px; font-weight: 700; }
+    .sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #aeb5c3; box-shadow: 0 0 0 5px rgba(174,181,195,.15); }
+    .sync.on .sync-dot { background: #31b56b; box-shadow: 0 0 0 5px rgba(49,181,107,.15); }
+    .grid { display: grid; grid-template-columns: minmax(290px,.78fr) minmax(420px,1.22fr); gap: 18px; align-items: start; }
+    .panel { border: 1px solid rgba(255,255,255,.72); border-radius: 22px; background: rgba(255,255,255,.79); box-shadow: var(--shadow); overflow: hidden; backdrop-filter: blur(16px); }
+    .panel-pad { padding: 22px; }
+    .label { margin-bottom: 8px; color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .18em; }
+    .now-card { min-height: 118px; padding: 19px; border-radius: 17px; background: linear-gradient(135deg,var(--navy),var(--navy-2)); color: white; box-shadow: 0 13px 28px rgba(16,35,72,.22); }
+    .now-number { color: var(--gold-light); font: 700 14px/1 Georgia,serif; letter-spacing: .15em; }
+    .now-title { margin-top: 9px; font: 700 clamp(21px,3vw,31px)/1.15 Georgia,"Yu Mincho",serif; }
+    .now-artist { margin-top: 7px; color: rgba(255,255,255,.68); font-size: 13px; }
+    .main-controls { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; margin-top: 15px; }
+    .main-controls .wide { grid-column: 1 / -1; }
+    .button {
+      min-height: 48px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 13px;
+      background: white; color: var(--navy); cursor: pointer; font-weight: 800;
+      box-shadow: 0 5px 15px rgba(18,41,79,.06); transition: transform .16s ease, border-color .16s ease;
+    }
+    .button:hover { transform: translateY(-1px); border-color: var(--gold); }
+    .button.primary { border-color: transparent; color: white; background: linear-gradient(135deg,#987026,#d4aa5b); }
+    .button.encore { color: #7e2947; background: linear-gradient(135deg,#fff1f7,#ffe5cf); border-color: rgba(173,79,112,.18); }
+    .button.encore.on { color: white; background: linear-gradient(135deg,#9d365f,#c87b55); }
+    .button.danger { color: #a13850; }
+    .section { margin-top: 19px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .fx { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .fx .button.active { color: white; background: var(--navy); border-color: var(--navy); }
+    .hint { margin: 14px 2px 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .songs-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; padding: 19px 21px 14px; border-bottom: 1px solid var(--line); }
+    .songs-head h2 { margin: 0; font: 700 22px/1.1 Georgia,"Yu Mincho",serif; }
+    .songs-head span { color: var(--muted); font-size: 12px; }
+    .songs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: calc(100vh - 160px); overflow-y: auto; padding: 14px; }
+    .song {
+      display: grid; grid-template-columns: 38px minmax(0,1fr); align-items: center; min-height: 55px;
+      border: 1px solid var(--line); border-radius: 13px; padding: 7px 10px; text-align: left;
+      background: rgba(255,255,255,.84); color: var(--navy); cursor: pointer;
+    }
+    .song:hover { border-color: var(--gold); }
+    .song.active { color: #65440d; border-color: var(--gold); background: #fff7dd; box-shadow: inset 4px 0 var(--gold); }
+    .song.done { opacity: .42; }
+    .song.locked { display: none; }
+    .song-no { color: var(--gold); font: 700 14px/1 Georgia,serif; }
+    .song-title { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 800; font-size: 13px; }
+    .song-artist { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+      .songs { max-height: none; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 16px,1120px); padding-top: 8px; }
+      .topbar { padding: 16px; border-radius: 17px; }
+      .grid { gap: 10px; }
+      .panel { border-radius: 17px; }
+      .songs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div><p class="eyebrow">SETLIST LIVE</p><h1>Voyage Control</h1></div>
+      <div id="sync" class="sync"><span class="sync-dot"></span><span id="syncText">表示画面を確認中</span></div>
+    </header>
+
+    <div class="grid">
+      <section class="panel panel-pad">
+        <div class="label">CURRENT STATUS</div>
+        <div class="now-card">
+          <div id="nowNumber" class="now-number">STANDBY</div>
+          <div id="nowTitle" class="now-title">待機中</div>
+          <div id="nowArtist" class="now-artist">曲を選択するか「次の曲」を押してください</div>
+        </div>
+
+        <div class="main-controls">
+          <button id="prev" class="button" type="button">← 前の曲</button>
+          <button id="next" class="button primary" type="button">次の曲 →</button>
+          <button id="standby" class="button" type="button">待機中に戻す</button>
+          <button id="mainEnd" class="button" type="button">本編終了</button>
+          <button id="encore" class="button encore wide" type="button">✦ アンコール曲を解禁</button>
+        </div>
+
+        <div class="section">
+          <div class="label">FALLING EFFECT</div>
+          <div class="fx">
+            <button class="button fx-button" data-fx="off" type="button">OFF</button>
+            <button class="button fx-button" data-fx="soft" type="button">控えめ</button>
+            <button class="button fx-button" data-fx="normal" type="button">通常</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <button id="reset" class="button danger" type="button">すべてリセット</button>
+          <p class="hint">この画面は配信には映りません。OBSでは「ドック」→「カスタムブラウザドック」にこの操作画面のURLを登録して使用できます。</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header class="songs-head"><h2>SET LIST</h2><span>曲を押して直接切り替え</span></header>
+        <div id="songs" class="songs"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+      const songs = [
+        ["Voyage", "浜崎あゆみ"], ["真冬のパンセ", "KinKi Kids"], ["TRUE BLUE.", "LUNA SEA"],
+        ["flower", "L'Arc-en-Ciel"], ["春咲センチメンタル", "Plastic Tree"], ["Cassis", "the GazettE"],
+        ["EDEN", "D"], ["alkaloid showcase", "摩天楼オペラ"], ["You got game?", "KIMERU"],
+        ["アンインストール", "石川智晶"], ["真赤な誓い", "福山芳樹"], ["Nova Era", "Angra"],
+        ["DESTINY", "GALNERYUS"], ["oath sign", "LiSA"], ["Vitalization", "水樹奈々"],
+        ["サクリファイス", "まふまふ"], ["BALALAIKA", "9Lana"], ["ビバリウム", "Ado"],
+        ["インフェルノ", "Mrs. GREEN APPLE"], ["甲賀忍法帖", "陰陽座"]
+      ];
+      const STORAGE_KEY = "voyage-obs-state-v1";
+      const CHANNEL_NAME = "voyage-obs-control-v1";
+      const defaultState = { current: -1, encore: false, fx: "normal" };
+      const channel = "BroadcastChannel" in window ? new BroadcastChannel(CHANNEL_NAME) : null;
+      const state = loadState();
+      let lastDisplaySignal = 0;
+
+      function loadState() {
+        try { return { ...defaultState, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; }
+        catch (_) { return { ...defaultState }; }
+      }
+      function snapshot() { return { current: state.current, encore: state.encore, fx: state.fx }; }
+      function publish() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot()));
+        if (channel) channel.postMessage({ type: "set-state", state: snapshot() });
+        render();
+      }
+      function applyRemote(next) {
+        if (!next || typeof next !== "object") return;
+        Object.assign(state, defaultState, next);
+        render();
+      }
+      function setConnected() {
+        lastDisplaySignal = Date.now();
+        document.getElementById("sync").classList.add("on");
+        document.getElementById("syncText").textContent = "表示画面と同期中";
+      }
+      function pad(index) { return String(index + 1).padStart(2,"0"); }
+      function buildSongs() {
+        const holder = document.getElementById("songs");
+        songs.forEach(([title,artist],index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "song";
+          button.dataset.index = String(index);
+          button.innerHTML = `<span class="song-no">${pad(index)}</span><span><span class="song-title"></span><span class="song-artist"></span></span>`;
+          button.querySelector(".song-title").textContent = title;
+          button.querySelector(".song-artist").textContent = artist;
+          button.addEventListener("click", () => {
+            if (index >= 18 && !state.encore) return;
+            state.current = index;
+            publish();
+          });
+          holder.appendChild(button);
+        });
+      }
+      function render() {
+        const visibleCurrent = state.current >= 0 && state.current < songs.length && (state.current < 18 || state.encore);
+        const mainEnded = state.current === 18 && !state.encore;
+        document.getElementById("nowNumber").textContent = visibleCurrent ? `TRACK ${pad(state.current)}` : (mainEnded ? "MAIN SET COMPLETE" : "STANDBY");
+        document.getElementById("nowTitle").textContent = visibleCurrent ? songs[state.current][0] : (mainEnded ? "本編終了" : "待機中");
+        document.getElementById("nowArtist").textContent = visibleCurrent ? songs[state.current][1] : (mainEnded ? "アンコール解禁をお待ちください" : "曲を選択するか「次の曲」を押してください");
+        document.querySelectorAll(".song").forEach(button => {
+          const index = Number(button.dataset.index);
+          button.classList.toggle("active", index === state.current && (index < 18 || state.encore));
+          button.classList.toggle("done", index < state.current);
+          button.classList.toggle("locked", index >= 18 && !state.encore);
+        });
+        document.querySelectorAll(".fx-button").forEach(button => button.classList.toggle("active", button.dataset.fx === state.fx));
+        const encore = document.getElementById("encore");
+        encore.classList.toggle("on", state.encore);
+        encore.textContent = state.encore ? "✦ アンコール表示中" : "✦ アンコール曲を解禁";
+      }
+      function move(delta) {
+        const last = state.encore ? songs.length - 1 : 17;
+        if (delta > 0 && state.current >= last) return;
+        if (delta < 0 && state.current < 0) return;
+        state.current = Math.max(-1, Math.min(state.current < 0 && delta > 0 ? 0 : state.current + delta, last));
+        publish();
+      }
+
+      buildSongs();
+      render();
+      document.getElementById("prev").addEventListener("click", () => move(-1));
+      document.getElementById("next").addEventListener("click", () => move(1));
+      document.getElementById("standby").addEventListener("click", () => { state.current = -1; publish(); });
+      document.getElementById("mainEnd").addEventListener("click", () => { state.current = 18; state.encore = false; publish(); });
+      document.getElementById("encore").addEventListener("click", () => { state.encore = true; publish(); });
+      document.getElementById("reset").addEventListener("click", () => { Object.assign(state, defaultState); publish(); });
+      document.querySelectorAll(".fx-button").forEach(button => button.addEventListener("click", () => { state.fx = button.dataset.fx; publish(); }));
+
+      if (channel) {
+        channel.addEventListener("message", event => {
+          const message = event.data || {};
+          if (message.type === "state") { applyRemote(message.state); setConnected(); }
+          if (message.type === "display-ready") { setConnected(); channel.postMessage({ type: "set-state", state: snapshot() }); }
+        });
+        channel.postMessage({ type: "request-state" });
+        setInterval(() => {
+          channel.postMessage({ type: "request-state" });
+          if (Date.now() - lastDisplaySignal > 5000) {
+            document.getElementById("sync").classList.remove("on");
+            document.getElementById("syncText").textContent = "表示画面を確認中";
+          }
+        }, 2500);
+      }
+      window.addEventListener("storage", event => {
+        if (event.key !== STORAGE_KEY || !event.newValue) return;
+        try { applyRemote(JSON.parse(event.newValue)); } catch (_) {}
+      });
+    })();
+  </script>
+</body>
+</html>
